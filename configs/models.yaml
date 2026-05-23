@@ -1,0 +1,32 @@
+# ── Model Checkpoint Paths ────────────────────────────────────────────────────
+# All paths relative to project root.
+# Weights are downloaded / placed here manually (see README).
+
+detection:
+  player_weights: "models/checkpoints/yolov8m.pt"     # YOLOv8m pretrained (COCO)
+  ball_weights:   "models/checkpoints/ball_yolo.pt"   # YOLO ball detector (fallback)
+  player_conf:    0.4
+  ball_conf:      0.35
+  iou_threshold:  0.45
+
+tracknet:
+  weights:  "models/checkpoints/tracknet_best.pt"     # TrackNetV3 pretrained weights
+  seq_len:  8                                          # must match pretrained weights
+  conf:     0.50                                       # heatmap peak threshold
+
+tracking:
+  # ByteTrack params
+  track_thresh:   0.5
+  track_buffer:   30      # frames to keep a lost track alive
+  match_thresh:   0.8
+
+pose:
+  model: "mediapipe"      # "mediapipe" | "vitpose"
+  # vitpose_weights: "models/checkpoints/vitpose_base.pth"
+
+reid:
+  weights: "models/checkpoints/osnet_x0_25.pt"
+  feature_dim: 512
+
+shot_quality:
+  weights: "models/checkpoints/shot_quality_xgb.pkl"

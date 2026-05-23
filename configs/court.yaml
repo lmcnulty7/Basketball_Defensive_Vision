@@ -1,0 +1,47 @@
+# ── NBA Court Model Configuration ────────────────────────────────────────────
+# All dimensions in FEET (official NBA court).
+# Origin (0, 0) = center of court.
+
+court:
+  length_ft: 94.0
+  width_ft: 50.0
+
+basket:
+  left:  [-41.75, 0.0]    # [x, y] in feet from center
+  right: [ 41.75, 0.0]
+
+three_point:
+  corner_distance_ft: 22.0        # straight-line distance in corners
+  arc_distance_ft: 23.75          # distance along the arc (above the break)
+
+paint:
+  width_ft: 16.0
+  length_ft: 19.0                 # from baseline
+
+restricted_area_radius_ft: 4.0   # no-charge circle radius
+
+# ── Homography anchor points ──────────────────────────────────────────────────
+# These are the court landmarks used to compute the H matrix.
+# Pixel coords are filled in per-game during calibration (scripts/calibrate_court.py).
+# Real-world coords are fixed NBA dimensions.
+homography_anchors:
+  # name: [real_x_ft, real_y_ft]
+  center_circle:         [0.0,    0.0]
+  left_basket:           [-41.75, 0.0]
+  right_basket:          [41.75,  0.0]
+  left_paint_tl:         [-47.0,  8.0]
+  left_paint_tr:         [-28.0,  8.0]
+  left_paint_bl:         [-47.0, -8.0]
+  left_paint_br:         [-28.0, -8.0]
+  right_paint_tl:        [28.0,   8.0]
+  right_paint_tr:        [47.0,   8.0]
+  right_paint_bl:        [28.0,  -8.0]
+  right_paint_br:        [47.0,  -8.0]
+
+# ── Zone definitions (for shot classification) ────────────────────────────────
+zones:
+  restricted_area:       {radius_ft: 4.0,   pts: 2}
+  paint_non_ra:          {pts: 2}
+  midrange:              {pts: 2}
+  corner_3:              {pts: 3}
+  above_break_3:         {pts: 3}

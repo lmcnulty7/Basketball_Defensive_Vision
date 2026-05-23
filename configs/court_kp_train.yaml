@@ -1,0 +1,39 @@
+# YOLO-pose dataset config for court keypoint training.
+# Place this file at configs/court_kp_train.yaml.
+# After downloading your labeled export from Roboflow, unzip it so that
+# data/court_kp_dataset/ contains images/{train,val} and labels/{train,val}.
+
+path: ../data/court_kp_dataset   # relative to this file's location
+
+train: images/train
+val:   images/val
+
+# Single class: the basketball court (one bounding box = whole court per frame)
+nc: 1
+names:
+  - court
+
+# 14 keypoints, each stored as (x, y, visibility)
+# visibility: 0 = not labeled/not in frame, 1 = labeled but occluded, 2 = visible
+kpt_shape: [14, 3]
+
+# Horizontal-flip symmetry pairs.
+# When an image is flipped left↔right, home ↔ away.  Self-mapped keypoints
+# (half_bot=8, half_top=9) are unchanged since they sit on the center line.
+#
+# Index → keypoint name → flipped counterpart index
+#  0  home_paint_bl  → away_paint_br  (6)
+#  1  home_paint_tl  → away_paint_tr  (7)
+#  2  home_paint_br  → away_paint_bl  (4)
+#  3  home_paint_tr  → away_paint_tl  (5)
+#  4  away_paint_bl  → home_paint_br  (2)
+#  5  away_paint_tl  → home_paint_tr  (3)
+#  6  away_paint_br  → home_paint_bl  (0)
+#  7  away_paint_tr  → home_paint_tl  (1)
+#  8  half_bot       → half_bot       (8)
+#  9  half_top       → half_top       (9)
+# 10  home_three_bl  → away_three_bl  (12)
+# 11  home_three_tl  → away_three_tl  (13)
+# 12  away_three_bl  → home_three_bl  (10)
+# 13  away_three_tl  → home_three_tl  (11)
+flip_idx: [6, 7, 4, 5, 2, 3, 0, 1, 8, 9, 12, 13, 10, 11]

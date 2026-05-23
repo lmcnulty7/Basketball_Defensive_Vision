@@ -1,0 +1,23 @@
+# ByteTrack configuration — used by MultiTracker via ultralytics model.track()
+# These values are tuned for NBA broadcast footage at ~10 fps (stride=3 from 30fps).
+
+tracker_type:       bytetrack
+
+# Detections above this threshold go into the primary matching pool.
+track_high_thresh:  0.40
+
+# Low-confidence detections kept in secondary pool (ByteTrack's occlusion handling).
+track_low_thresh:   0.10
+
+# A new track is born only when a detection exceeds this threshold.
+new_track_thresh:   0.50
+
+# Frames to keep a lost track alive before killing it.
+# 30 frames @ stride=3 on 30fps = ~3 real seconds of occlusion tolerance.
+track_buffer:       30
+
+# IoU threshold for Hungarian-algorithm assignment.
+match_thresh:       0.80
+
+# Fuse detection score with IoU for matching — stabilizes low-confidence tracks.
+fuse_score:         True

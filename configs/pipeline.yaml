@@ -1,0 +1,19 @@
+# ── Pipeline Configuration ────────────────────────────────────────────────────
+# Edit these values — no code changes needed.
+
+video:
+  stride: 3               # process every Nth frame (3 = ~10fps from 30fps broadcast)
+  input_size: 640         # model input resolution (square); YOLOv8 default is 640
+
+device: "mps"             # "cpu" | "cuda" | "mps" (Apple Silicon)
+
+output:
+  frames_dir: "data/processed/frames"
+  detections_dir: "data/processed/detections"
+  tracks_dir: "data/processed/tracks"
+  stats_dir: "data/processed/stats"
+  save_annotated_video: false
+  annotated_video_fps: 10
+
+logging:
+  level: "INFO"           # DEBUG | INFO | WARNING | ERROR

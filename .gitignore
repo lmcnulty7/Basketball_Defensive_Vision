@@ -1,0 +1,36 @@
+# Data (large files)
+data/raw/
+data/processed/
+data/ball_dataset_500/
+data/ball_dataset_local/
+data/tracknet_dataset/
+data/court_kp_dataset/
+data/samples/
+models/checkpoints/*.pt
+models/checkpoints/*.pth
+
+# Large archives
+*.zip
+
+# R
+.Rhistory
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# Environments
+.env
+venv/
+.venv/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# OS
+.DS_Store

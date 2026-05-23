@@ -1,0 +1,11 @@
+# YOLOv8 detection dataset config for court bounding-box detector.
+# The train_court_detector.py script creates the val split automatically.
+
+path: ../data/export_dataset_ YOLOv8/basketball_court_dataset
+
+train: train/images
+val:   val/images      # created by train_court_detector.py from train split
+
+nc: 1
+names:
+  - court
