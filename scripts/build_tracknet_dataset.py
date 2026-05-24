@@ -11,8 +11,9 @@ Two source modes
 
 Per-frame pipeline
 ──────────────────
-  Gate 1 — Court visibility: court_detector_yolov8n.pt confidence ≥ COURT_CONF.
-            Skips commercials, studio, replays.
+  Gate 1 — Court visibility: CLIP zero-shot classifier (openai/clip-vit-base-patch32).
+            Generalizes across all NBA eras, arenas, and broadcast styles.
+            Skips commercials, studio segments, halftime shows.
   Label  — HSV orange detector: visibility=1 + (cx, cy) when ball found,
             visibility=0 otherwise.  This is a label, not a gate — invisible-ball
             frames are saved so the model learns to output zero heatmaps.
@@ -65,6 +66,8 @@ from typing import List, Optional, Tuple
 
 import cv2
 import numpy as np
+import torch
+from PIL import Image
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(name)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -72,7 +75,7 @@ logger = logging.getLogger(__name__)
 # ── Constants ──────────────────────────────────────────────────────────────────
 TRACKNET_H  = 288
 TRACKNET_W  = 512
-COURT_CONF  = 0.50   # min court detector confidence
+COURT_CONF  = 0.35   # min CLIP court probability (4-way softmax; random baseline = 0.25)
 HSV_CIRC    = 0.65   # min contour circularity for ball
 BALL_MIN_PX = 8      # min ball width at original resolution
 BALL_MAX_PX = 50     # max ball width at original resolution
@@ -130,20 +133,51 @@ def _hsv_ball_center(
     return best_center
 
 
-# ── Court detector ─────────────────────────────────────────────────────────────
+# ── Court gate (CLIP zero-shot) ────────────────────────────────────────────────
 
-def _load_court_detector(weights_path: str, device: str):
-    from ultralytics import YOLO
-    model = YOLO(weights_path)
-    logger.info("Court detector loaded: %s", weights_path)
-    return model
+class _CLIPCourtGate:
+    """
+    Zero-shot court detector using CLIP text-image similarity.
+    Generalizes across all NBA eras, arenas, and broadcast qualities
+    without any task-specific training.
+    """
+    _TEXTS = [
+        "an NBA basketball court during a game",
+        "a television commercial or advertisement",
+        "a sports news studio or analyst desk",
+        "an arena crowd with no court visible",
+    ]
+
+    def __init__(self, device: str) -> None:
+        from transformers import CLIPModel, CLIPProcessor
+        self._device = device
+        self._model = CLIPModel.from_pretrained(
+            "openai/clip-vit-base-patch32"
+        ).to(device).eval()
+        self._processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+        logger.info("CLIP court gate ready (zero-shot, device=%s)", device)
+
+    def confidence(self, bgr: np.ndarray) -> float:
+        """Return probability [0, 1] that frame shows an NBA basketball court."""
+        rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+        pil_img = Image.fromarray(rgb)
+        inputs = self._processor(
+            text=self._TEXTS, images=pil_img,
+            return_tensors="pt", padding=True,
+        )
+        inputs = {k: v.to(self._device) for k, v in inputs.items()}
+        with torch.no_grad():
+            out = self._model(**inputs)
+            probs = out.logits_per_image.softmax(dim=1)[0]
+        return float(probs[0])
 
 
-def _court_confidence(model, bgr: np.ndarray, device: str) -> float:
-    results = model.predict(bgr, conf=0.1, verbose=False, device=device)
-    if not results or results[0].boxes is None or len(results[0].boxes) == 0:
-        return 0.0
-    return float(results[0].boxes.conf.max().item())
+def _load_court_detector(weights_path: str, device: str) -> _CLIPCourtGate:
+    return _CLIPCourtGate(device)
+
+
+def _court_confidence(model: _CLIPCourtGate, bgr: np.ndarray, device: str) -> float:
+    return model.confidence(bgr)
 
 
 # ── YouTube download helpers ───────────────────────────────────────────────────
@@ -359,25 +393,15 @@ def main() -> None:
                         help="Max frames saved per clip (caps storage per video)")
 
     # Model / hardware
-    parser.add_argument("--court-weights",
-                        default="models/checkpoints/court_detector_yolov8n.pt")
+    parser.add_argument("--court-weights", default=None,
+                        help="Ignored — court gate now uses CLIP zero-shot")
     parser.add_argument("--device",  default="cuda")
     parser.add_argument("--seed",    type=int, default=42)
 
     args = parser.parse_args()
     random.seed(args.seed)
 
-    # Validate court detector
-    court_path = Path(args.court_weights)
-    if not court_path.exists():
-        logger.error(
-            "Court detector not found: %s\n"
-            "Copy it from your Mac:  scp models/checkpoints/court_detector_yolov8n.pt server:~/Basketball_Defensive_Vision/models/checkpoints/",
-            court_path,
-        )
-        raise SystemExit(1)
-
-    court_model = _load_court_detector(str(court_path), args.device)
+    court_model = _load_court_detector("", args.device)
     out_dir     = Path(args.out_dir)
     total       = 0
 
