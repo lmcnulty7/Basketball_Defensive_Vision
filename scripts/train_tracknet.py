@@ -316,6 +316,12 @@ def main() -> None:
     out_dir  = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    # ── Model (init CUDA before DataLoader pin_memory) ────────────────────────
+    from src.detection.tracknet import TrackNetV3, load_pretrained
+
+    model = TrackNetV3().to(device)
+    load_pretrained(model, args.weights, device=device)
+
     # ── Datasets ──────────────────────────────────────────────────────────────
     train_ds = TrackNetDataset(data_dir / "train")
     val_ds   = TrackNetDataset(data_dir / "val",   min_visible=1)
@@ -341,12 +347,6 @@ def main() -> None:
         pin_memory=(device != "cpu"),
         persistent_workers=(args.workers > 0),
     )
-
-    # ── Model ─────────────────────────────────────────────────────────────────
-    from src.detection.tracknet import TrackNetV3, load_pretrained
-
-    model = TrackNetV3().to(device)
-    load_pretrained(model, args.weights, device=device)
 
     # ── Optimizer + scheduler ─────────────────────────────────────────────────
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
