@@ -309,8 +309,11 @@ def main() -> None:
     parser.add_argument("--seed",       type=int,   default=42)
     args = parser.parse_args()
 
-    torch.manual_seed(args.seed)
     device = args.device
+    if device != "cpu":
+        torch.zeros(1).cuda()  # force CUDA context init before anything else
+
+    torch.manual_seed(args.seed)
 
     data_dir = Path(args.data_dir)
     out_dir  = Path(args.out_dir)
